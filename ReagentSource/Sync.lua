@@ -367,6 +367,23 @@ ev:SetScript("OnEvent", function(_, event, ...)
     end
 end)
 
+-- 내가 직접 모은 데이터가 늘면(상인 창, 루팅) 1분 안에 목록을 다시 알린다
+--   (파티를 새로 맺지 않아도, 같이 사냥하는 중에 받는 사람에게 넘어가도록)
+local lastOwn
+local ownTicker = CreateFrame("Frame")
+local oacc = 0
+ownTicker:SetScript("OnUpdate", function(_, e)
+    oacc = oacc + e
+    if oacc < 60 then return end
+    oacc = 0
+    if not RS.db then return end
+    local own = RS.CountContributions()
+    if lastOwn and own > lastOwn then
+        for _, ch in ipairs(channels()) do sendInventory(ch, true) end
+    end
+    lastOwn = own
+end)
+
 -- 기록이 바뀌면 목록을 다시 만든다
 local origInvalidate = RS.Invalidate
 function RS.Invalidate(itemID)
