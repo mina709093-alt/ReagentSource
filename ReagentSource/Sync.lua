@@ -268,6 +268,9 @@ local function onMessage(prefix, msg, ch, sender)
     local who = usable(sender) and sender or "?"
     if Ambiguate then who = Ambiguate(who, "none") end
     Sync.peers[from] = { who = who, at = GetTime(), col = Sync.peers[from] and Sync.peers[from].col }
+    if (kind == "H" and f[5] == "1") or (kind == "I" and f[3] == "1") or Sync.peers[from].col then
+        Sync.collectorSeenAt = GetTime() -- 받는 사람이 같은 파티/길드에 있음
+    end
 
     if kind == "H" then
         local count, hash, col = tonumber(f[3]), tonumber(f[4]), f[5] == "1"
@@ -389,6 +392,12 @@ local origInvalidate = RS.Invalidate
 function RS.Invalidate(itemID)
     myKeys = nil
     origInvalidate(itemID)
+end
+
+-- 최근 seconds 초 안에 받는 사람(상수)을 파티/길드에서 봤는지
+--   봤으면 새 데이터는 자동으로 넘어가므로 "파일 보내주세요" 창을 띄우지 않는다
+function Sync.CollectorNearby(seconds)
+    return Sync.collectorSeenAt ~= nil and GetTime() - Sync.collectorSeenAt < (seconds or 1800)
 end
 
 -- /획득처 상태 에서 쓰는 요약

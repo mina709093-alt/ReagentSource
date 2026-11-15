@@ -380,6 +380,11 @@ local function notify(force)
         return
     end
     if RS.db.contribMuted then return end
+    -- 받는 사람과 같은 파티/길드에 있으면 자동으로 전달되므로 창·아이콘·채팅 알림을 띄우지 않는다
+    if RS.Sync and RS.Sync.CollectorNearby(1800) then
+        if RS.db.shareState then hideShare() end
+        return
+    end
     -- 창/아이콘: 처음 생겼을 때는 창, 사용자가 줄여 둔 상태면 아이콘 유지 (다시 접속해도 유지)
     if RS.db.shareState == "icon" then
         if not alertIcon then makeIcon() end
@@ -453,7 +458,7 @@ loginFrame:SetScript("OnEvent", function(self)
     local t = 0
     self:SetScript("OnUpdate", function(f, e)
         t = t + e
-        if t < 12 then return end
+        if t < 60 then return end -- 공유 인사(20초 뒤)로 받는 사람이 있는지 먼저 확인한 다음에
         f:SetScript("OnUpdate", nil)
         notify(true)
     end)
