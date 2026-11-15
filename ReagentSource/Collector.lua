@@ -229,6 +229,7 @@ local function recordDrop(itemID, npcID, name, zone, x, y, uiMap)
         list[key] = e
     end
     e.name = name
+    e.rx = nil -- 직접 루팅했으면 받은 데이터가 아니라 내 데이터
     if npcID then RS.db.npcNames[npcID] = name end
     e.seen = (e.seen or 0) + 1
     if x and y and (e.n or 0) < 50 then -- 좌표 평균은 최대 50회 관측까지만 반영

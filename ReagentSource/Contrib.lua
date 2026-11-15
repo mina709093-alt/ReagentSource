@@ -53,11 +53,40 @@ local function shippedDrop(item, npcID)
     return hasNpc(cm.drops and cm.drops[item], npcID) or hasNpc(st.drops and st.drops[item], npcID)
 end
 
+-- 공유(Sync.lua)용: 이 키의 데이터가 이미 애드온 자료나 내 기록에 있는지
+function RS.HasKey(key)
+    if not shippedV then buildIndex() end
+    local kind, a, b = key:match("^(%a):(%d+):?(%d*)$")
+    a, b = tonumber(a), tonumber(b)
+    if not kind or not a then return true end
+    local db, cm, E = RS.db, ns.CommunityData or {}, ns.ExternalData or {}
+    if kind == "v" then
+        if shippedVendor(a, b) then return true end
+        for _, e in pairs(db.vendors[a] or {}) do if e.npc == b then return true end end
+    elseif kind == "d" then
+        if shippedDrop(a, b) then return true end
+        for _, e in pairs(db.drops[a] or {}) do if e.npc == b then return true end end
+    elseif kind == "n" then
+        return db.npcNames[a] ~= nil or (cm.npcNames and cm.npcNames[a]) ~= nil
+    elseif kind == "o" then
+        return db.objNames[a] ~= nil or (cm.objNames and cm.objNames[a]) ~= nil
+    elseif kind == "q" then
+        return db.questNames[a] ~= nil or (cm.questNames and cm.questNames[a]) ~= nil
+    elseif kind == "h" then
+        local n = E.npc and E.npc[a]
+        return db.hostileNPC[a] ~= nil or (cm.hostile and cm.hostile[a]) ~= nil or (n and n[3]) ~= nil
+    end
+    return false
+end
+
 ---------------------------------------------------------------------------
 -- 새 데이터 세기
 ---------------------------------------------------------------------------
-function RS.CountContributions()
+-- includeReceived: 파티/길드원에게서 받은 데이터(rx)까지 포함할지 (공유용 목록). 기본은 내가 직접 모은 것만
+function RS.CountContributions(includeReceived)
     if not RS.db then return 0, {} end
+    local rx = RS.db.rx or {}
+    local function mine(kind, id) return includeReceived or not (rx[kind] and rx[kind][id]) end
     if not shippedV then buildIndex() end
     local E, cm = ns.ExternalData or {}, ns.CommunityData or {}
     local keys = {}
@@ -65,14 +94,14 @@ function RS.CountContributions()
 
     for item, list in pairs(RS.db.vendors) do
         for _, e in pairs(list) do
-            if e.npc and not shippedVendor(item, e.npc) then
+            if e.npc and (includeReceived or not e.rx) and not shippedVendor(item, e.npc) then
                 keys["v:" .. item .. ":" .. e.npc] = true; c.vendor = c.vendor + 1
             end
         end
     end
     for item, list in pairs(RS.db.drops) do
         for _, e in pairs(list) do
-            if e.npc and not shippedDrop(item, e.npc) then
+            if e.npc and (includeReceived or not e.rx) and not shippedDrop(item, e.npc) then
                 keys["d:" .. item .. ":" .. e.npc] = true; c.drop = c.drop + 1
             end
         end
@@ -82,21 +111,21 @@ function RS.CountContributions()
     for id, name in pairs(korean and RS.db.npcNames or {}) do
         local n = npcs[id]
         local shipped = (cm.npcNames and cm.npcNames[id]) or (n and n[2])
-        if n and shipped ~= name then keys["n:" .. id] = true; c.name = c.name + 1 end
+        if n and shipped ~= name and mine("n", id) then keys["n:" .. id] = true; c.name = c.name + 1 end
     end
     for id, name in pairs(korean and RS.db.objNames or {}) do
         local shipped = (cm.objNames and cm.objNames[id]) or (E.oname and E.oname[id])
         local shippedKo = type(shipped) == "string" and shipped:find("[\234-\237]")
-        if not shippedKo and shipped ~= name then
+        if not shippedKo and shipped ~= name and mine("o", id) then
             keys["o:" .. id] = true; c.name = c.name + 1
         end
     end
     for id, name in pairs(korean and RS.db.questNames or {}) do
-        if (cm.questNames and cm.questNames[id]) ~= name then keys["q:" .. id] = true; c.name = c.name + 1 end
+        if (cm.questNames and cm.questNames[id]) ~= name and mine("q", id) then keys["q:" .. id] = true; c.name = c.name + 1 end
     end
     for id, f in pairs(RS.db.hostileNPC) do
         local n = npcs[id]
-        if not (cm.hostile and cm.hostile[id] == f) and not (n and n[3] == f) then
+        if not (cm.hostile and cm.hostile[id] == f) and not (n and n[3] == f) and mine("h", id) then
             keys["h:" .. id] = true; c.hostile = c.hostile + 1
         end
     end
@@ -107,6 +136,7 @@ end
 -- "보냄" 표시한 뒤로 새로 생긴 것만 센다
 local function unsentCount()
     local _, c, keys = RS.CountContributions()
+    if RS.db.isCollector then return 0, c, keys end -- 받는 사람(상수) 계정은 보낼 필요 없음
     local sent = RS.db.sentKeys or {}
     local n = 0
     for k in pairs(keys or {}) do if not sent[k] then n = n + 1 end end
@@ -362,6 +392,7 @@ local function notify(force)
     if not force and (n <= lastCount or GetTime() - lastNotify < NOTIFY_GAP) then return end
     lastNotify, lastCount = GetTime(), n
     RS.Print(format("|cffffd100새로 수집한 획득처 데이터가 %d건 있습니다. %s님에게 파일을 보내주세요!|r", n, collector()))
+    RS.Print(format("%s님과 파티를 맺거나 같은 길드로 접속해 있으면 자동으로 전달되고, 이 알림도 사라집니다.", collector()))
     RS.Print("화면의 안내 창(또는 빨간 ! 아이콘)에서 [저장] → 파일 보내기 → [완료] 순서로 진행해 주세요.")
 end
 

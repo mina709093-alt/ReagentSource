@@ -111,6 +111,8 @@ local function help()
     RS.Print("  초기화 확인 - 기록 전체 삭제 (Data.lua 의 정적 데이터는 유지)")
     RS.Print("  단축키 <키> - 획득처 창 단축키 변경 (기본 F12, 끄기: 단축키 끔)")
     RS.Print("  공유 - 데이터 공유 안내 창 열기 (파일 보내는 방법)")
+    RS.Print("  동기화 - 지금 파티/길드원과 데이터 주고받기 (평소에는 자동)")
+    RS.Print("  받는사람 - 이 계정을 데이터 받는 사람으로 등록/해제 (상수님 전용)")
     RS.Print("  경로 <폴더> - 공유 창에 보여줄 SavedVariables 폴더 경로 저장")
     RS.Print("  보냄 - 파일을 보냈다고 표시 (같은 데이터로 다시 알리지 않음)")
     RS.Print("  알림 - 데이터 공유 알림 켜기/끄기")
@@ -138,6 +140,7 @@ local function handle(msg)
                 RS.cfg.useExternal and "사용 중" or "꺼짐"))
         end
         RS.Print("툴팁 연결 방식: " .. tostring(RS.hookMode))
+        if RS.Sync then RS.Print(RS.Sync.Status()) end
     elseif cmd == "내보내기" or cmd == "export" then
         showCopy(exportText())
     elseif cmd == "보기" or cmd == "show" then
@@ -188,6 +191,17 @@ local function handle(msg)
             RS.db.svFolder = raw
             RS.Print("공유 창 경로를 저장했습니다: " .. raw)
         end
+    elseif cmd == "받는사람" or cmd == "수집자" or cmd == "collector" then
+        RS.db.isCollector = not RS.db.isCollector
+        RS.Invalidate()
+        if RS.db.isCollector then
+            RS.Print("이 계정을 |cff66ff66데이터 받는 사람|r으로 등록했습니다. 파티/길드원의 새 데이터가 자동으로 모이고, 파일 보내기 알림은 뜨지 않습니다.")
+            if RS.Sync then RS.Sync.Hello() end
+        else
+            RS.Print("데이터 받는 사람 등록을 해제했습니다.")
+        end
+    elseif cmd == "동기화" or cmd == "sync" then
+        if RS.Sync then RS.Sync.Hello(); RS.Print("파티/길드원에게 데이터 공유를 요청했습니다. " .. RS.Sync.Status()) end
     elseif cmd == "공유" or cmd == "share" then
         RS.ShowShareGuide()
     elseif cmd == "보냄" or cmd == "완료" or cmd == "sent" then

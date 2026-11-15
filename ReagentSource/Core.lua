@@ -39,6 +39,8 @@ function RS.InitDB()
     db.locale = GetLocale and GetLocale() or db.locale -- 취합 시 한글 클라이언트 이름만 쓰기 위해 기록
     db.addonVersion = (C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata or function() end)(ADDON, "Version")
     db.sentKeys = type(db.sentKeys) == "table" and db.sentKeys or {}
+    db.rx = type(db.rx) == "table" and db.rx or {} -- 파티/길드원에게서 받은 이름·적대 상인 표시 (n/o/q/h)
+    for _, k in ipairs({ "n", "o", "q", "h" }) do db.rx[k] = type(db.rx[k]) == "table" and db.rx[k] or {} end
     RS.db = db
 end
 
