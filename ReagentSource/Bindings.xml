@@ -1,0 +1,5 @@
+<Bindings>
+	<Binding name="REAGENTSOURCE_POPUP" header="REAGENTSOURCE" category="ADDONS">
+		ReagentSource_OpenPopup()
+	</Binding>
+</Bindings>
