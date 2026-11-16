@@ -3,9 +3,9 @@
 ## Title-koKR: 재료 획득처 |cff66ccffReagentSource|r
 ## Notes: 제작 재료 툴팁 아래에 판매 NPC / 드랍 몬스터 위치를 표시합니다.
 ## Notes-koKR: 제작 재료 툴팁 아래에 판매 NPC / 드랍 몬스터 위치를 표시합니다.
-## Version: 1.8.2
+## Version: 1.8.3
 ## Category: 상수팩
-## SavedVariables: ReagentSourceDB
+## SavedVariables: ReagentSourceDB, SangsuPackDB
 
 SangsuPack.lua
 Data.lua
@@ -18,3 +18,4 @@ Collector.lua
 Contrib.lua
 Commands.lua
 Sync.lua
+Changelog.lua
