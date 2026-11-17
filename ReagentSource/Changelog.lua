@@ -2,6 +2,9 @@
 if not SangsuPack or not SangsuPack.RegisterChangelog then return end
 
 SangsuPack:RegisterChangelog("ReagentSource", {
+  { ver = "1.8.4",
+    "11월 17일 취합 데이터 반영: 판매처 97→169, 드랍 95→131, NPC 이름 183→296, 퀘스트 이름 46→51",
+  },
   { ver = "1.8.3",
     "커뮤니티 취합 자료 갱신 (2026-11-17): 판매 상인 96건, 드랍 몬스터 64건, NPC 이름 29건, 퀘스트 이름 42건이 새로 들어갔습니다.",
     "파티원끼리 공유된 데이터가 이제 모든 사용자에게 기본 자료로 들어갑니다.",
