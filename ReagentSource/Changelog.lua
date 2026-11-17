@@ -2,6 +2,11 @@
 if not SangsuPack or not SangsuPack.RegisterChangelog then return end
 
 SangsuPack:RegisterChangelog("ReagentSource", {
+  { ver = "1.8.5",
+    "'파일 보내주세요' 안내 창과 빨간 ! 아이콘, 채팅 알림이 더 이상 자동으로 뜨지 않습니다.",
+    "새로 모은 데이터는 각자 보관했다가 상수와 같은 파티/길드가 되면 자동으로 전달됩니다. (예전에 남은 빨간 아이콘도 자동으로 사라집니다)",
+    "파일로 직접 보내고 싶다면 /획득처 공유 로 안내 창을 열 수 있습니다.",
+  },
   { ver = "1.8.4",
     "11월 17일 취합 데이터 반영: 판매처 97→169, 드랍 95→131, NPC 이름 183→296, 퀘스트 이름 46→51",
   },

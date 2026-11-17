@@ -372,33 +372,13 @@ end)
 ---------------------------------------------------------------------------
 local lastNotify, lastCount = 0, 0
 
+-- 1.8.5부터: 새로 모은 데이터는 파티/길드 공유(Sync)로 보관했다가 받는 사람(상수)과 만나면 자동으로 전달된다.
+-- 그래서 "파일 보내주세요" 창·빨간 ! 아이콘·채팅 알림을 더 이상 자동으로 띄우지 않는다.
+-- 예전 버전에서 줄여 둔 빨간 아이콘이 남아 있으면 접속할 때 정리한다.
+-- 파일로 직접 보내고 싶은 사람은 /획득처 공유 로 안내 창을 열 수 있다.
 local function notify(force)
     if not RS.db then return end
-    local n = unsentCount()
-    if n <= 0 then -- 보낼 것이 없으면(보냄 표시 / 새 버전에 반영됨) 창과 아이콘 정리
-        if RS.db.shareState then hideShare() end
-        return
-    end
-    if RS.db.contribMuted then return end
-    -- 받는 사람과 같은 파티/길드에 있으면 자동으로 전달되므로 창·아이콘·채팅 알림을 띄우지 않는다
-    if RS.Sync and RS.Sync.CollectorNearby(1800) then
-        if RS.db.shareState then hideShare() end
-        return
-    end
-    -- 창/아이콘: 처음 생겼을 때는 창, 사용자가 줄여 둔 상태면 아이콘 유지 (다시 접속해도 유지)
-    if RS.db.shareState == "icon" then
-        if not alertIcon then makeIcon() end
-        if not (alertFrame and alertFrame:IsShown()) then alertIcon:Show() end
-    elseif not (alertFrame and alertFrame:IsShown()) then
-        RS.ShowShareWindow()
-    elseif alertFrame then
-        refreshWindow()
-    end
-    if not force and (n <= lastCount or GetTime() - lastNotify < NOTIFY_GAP) then return end
-    lastNotify, lastCount = GetTime(), n
-    RS.Print(format("|cffffd100새로 수집한 획득처 데이터가 %d건 있습니다. %s님에게 파일을 보내주세요!|r", n, collector()))
-    RS.Print(format("%s님과 파티를 맺거나 같은 길드로 접속해 있으면 자동으로 전달되고, 이 알림도 사라집니다.", collector()))
-    RS.Print("화면의 안내 창(또는 빨간 ! 아이콘)에서 [저장] → 파일 보내기 → [완료] 순서로 진행해 주세요.")
+    if RS.db.shareState or (alertIcon and alertIcon:IsShown()) then hideShare() end
 end
 
 function RS.ShowShareGuide()
