@@ -2,6 +2,10 @@
 if not SangsuPack or not SangsuPack.RegisterChangelog then return end
 
 SangsuPack:RegisterChangelog("ReagentSource", {
+  { ver = "1.8.7",
+    "11월 21일 취합 데이터 반영: 판매처 260→345, 드랍 252→309, NPC 이름 348→400, 퀘스트 이름 82→98",
+    "재료 툴팁에 'F12 클릭 시 전체 습득처 확인' 안내가 보라색으로 항상 나옵니다. (단축키를 바꿨다면 바꾼 키로 나옵니다)",
+  },
   { ver = "1.8.6",
     "11월 19일 취합 데이터 반영: 판매처 169→260, 드랍 131→252, NPC 이름 296→348, 퀘스트 이름 51→82",
   },

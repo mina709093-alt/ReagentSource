@@ -4,10 +4,11 @@ local RS = {}
 ns.RS = RS
 
 RS.cfg = {
-    showHint = true,                    -- 툴팁에 "[F12] 전체 보기" 안내 줄 표시
+    showHint = true,                    -- 툴팁에 "F12 클릭 시 전체 습득처 확인" 안내 줄 표시
     vendorColor = { 0.40, 0.85, 1.00 }, -- NPC 판매: 하늘색
     dropColor   = { 1.00, 0.65, 0.25 }, -- 몬스터 드랍: 주황색
     moreColor   = { 0.60, 0.60, 0.60 },
+    hintColor   = { 0.541, 0.169, 0.886 }, -- 전체 습득처 안내 줄: 보라색 #8A2BE2
     recordClasses = { [5] = true, [7] = true }, -- 5=재료(Reagent), 7=직업용품(Tradegoods)
     useSPF = true,                      -- Shortest Path Forever 길 안내 사용 (없으면 기본 지도 핀)
     useExternal = true,                 -- ExternalData.lua(EG Link 공개 자료) 사용
@@ -462,7 +463,7 @@ function RS.GetSources(itemID, all)
     return c
 end
 
--- 툴팁용 줄: 가장 가까운 판매 NPC 1명 + 가장 가까운 드랍 몬스터 1종 (+ 전체 보기 안내)
+-- 툴팁용 줄: 가장 가까운 판매 NPC 1명 + 가장 가까운 드랍 몬스터 1종 (+ 전체 습득처 안내)
 function RS.GetLines(itemID)
     local src = RS.GetSources(itemID)
     if not src then return nil end
@@ -471,14 +472,15 @@ function RS.GetLines(itemID)
     if v then local c = RS.cfg.vendorColor; lines[#lines + 1] = { formatEntry(v), c[1], c[2], c[3] } end
     if d then local c = RS.cfg.dropColor; lines[#lines + 1] = { formatEntry(d), c[1], c[2], c[3] } end
     local total = #src.vendors + #src.drops + #src.etc
-    if RS.cfg.showHint and (total > #lines) then
-        local c = RS.cfg.moreColor
-        local key = RS.PopupKeyName and RS.PopupKeyName()
+    -- 획득처가 있으면 항상 안내 (단축키를 끈 경우 제외). 단축키는 사용자가 바꾼 키를 그대로 보여 줌
+    local key = RS.PopupKeyName and RS.PopupKeyName()
+    if RS.cfg.showHint and total > 0 and key then
+        local c = RS.cfg.hintColor
         local parts = {}
         if #src.vendors > 0 then parts[#parts + 1] = "판매 " .. #src.vendors end
         if #src.drops > 0 then parts[#parts + 1] = "드랍 " .. #src.drops end
         if #src.etc > 0 then parts[#parts + 1] = "기타 " .. #src.etc end
-        lines[#lines + 1] = { format("[%s] 전체 보기 (%s)", key or "단축키", table.concat(parts, " · ")), c[1], c[2], c[3] }
+        lines[#lines + 1] = { format("%s 클릭 시 전체 습득처 확인 (%s)", key, table.concat(parts, " · ")), c[1], c[2], c[3] }
     end
     return lines
 end
