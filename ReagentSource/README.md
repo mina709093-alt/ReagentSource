@@ -24,7 +24,7 @@
 | 사용자들이 확인한 획득처 | 사용자들이 게임 안에서 직접 기록해 보내 준 자료를 취합 | 보내 준 분들의 동의 | `CommunityData.lua` |
 | 퀘스트 보상의 한글 제목·NPC 위치 (실시간) | 설치된 KQuestGuide 애드온의 데이터(`KQG_DATA`)를 읽기만 함 | KQuestGuide 조건 (GPLv3) | `Core.lua` |
 | 길 안내 (선택) | 설치된 Shortest Path Forever 애드온의 공개 API를 읽기만 함 | 해당 애드온 조건 | `Popup.lua` |
-| 월드맵 장소 검색의 지명·좌표 (한글·영문) | 게임 클라이언트 자체 테이블(WorldMapOverlay, AreaTable, UiMap, UiMapXMapArt), [wago.tools](https://wago.tools)에서 받은 빌드 1.60.1.70888. 좌표는 지역 지도에서 그 지명의 탐험 영역 중심 | 지명과 지도 자료의 권리는 Blizzard Entertainment | `MapSearchData.lua` |
+| 월드맵 장소 검색의 지명·좌표 (한글·영문) | 게임 클라이언트 자체 테이블(WorldMapOverlay, AreaTable, UiMap, UiMapXMapArt, UiMapAssignment, WMOAreaTable)과 지형·건물 배치 파일(ADT, WMO), [wago.tools](https://wago.tools)에서 받은 빌드 1.60.1.70888. 좌표는 지역 지도에서 그 지명의 탐험 영역 중심, 없으면 그 지명 땅이나 건물의 가운데 | 지명과 지도 자료의 권리는 Blizzard Entertainment | `MapSearchData.lua` |
 | 월드맵 이동·확대 (선택) | 설치된 OpenMap 애드온의 공개 API(`OpenMapAPI`)를 읽기만 함 | 해당 애드온 조건 (MIT) | `MapSearch.lua` |
 
 ### 데이터를 어떻게 확인하는지
@@ -33,7 +33,7 @@
 - 게임 안에서 상인 창을 열거나 몬스터를 루팅하면 실제 결과를 기록합니다. 파티원·길드원과 주고받을 수 있습니다.
 - **사용자 수집 자료는 취합 도구로 합친 뒤 검사합니다.** 기존 항목이 사라지지 않았는지, 좌표가 0~100 안인지, 파일이 정상적으로 읽히는지 확인한 다음에만 넣습니다.
 - 외부 데이터 파일(`ExternalData.lua`) 맨 위에 출처, 라이선스, 바꾼 내용, 만든 날짜가 적혀 있습니다.
-- 장소 검색 자료(`MapSearchData.lua`)는 게임 테이블에서 자동으로 만듭니다. 탐험 영역이 없는 작은 장소는 좌표를 알 수 없어서 넣지 않습니다(지역 중앙으로 대신하지 않음).
+- 장소 검색 자료(`MapSearchData.lua`)는 게임 테이블과 지형·건물 배치 파일에서 자동으로 만듭니다. 어디에서도 위치를 알 수 없는 지명은 넣지 않습니다(지역 중앙으로 대신하지 않음).
 
 ## 사용 방법
 
