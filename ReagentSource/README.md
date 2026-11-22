@@ -1,5 +1,39 @@
 # ReagentSource (재료 획득처)
 
+## 데이터 출처와 연락처 (Data sources & contact)
+
+이 애드온은 아래에 적은 프로젝트들의 공개 데이터를 이용해 만들었습니다. 데이터를 만들고 공개해 주신 분들께 깊이 감사드립니다.
+
+저작권자나 데이터를 제공하신 분께서 사용을 원하지 않으시면, 언제든 아래 메일로 알려 주십시오.
+요청을 받는 즉시 해당 데이터의 사용을 멈추고, 이후 배포본에서 빼겠습니다. 그 밖에 필요하신 조치가 있으면 성심껏 협조하겠습니다.
+미처 허락을 구하지 못한 부분이 있었다면 진심으로 사과드립니다.
+
+- 연락처: mina709093@gmail.com
+
+> This add-on is built with publicly available data from the projects listed below, and we are sincerely grateful to their authors.
+> If you are a rights holder or data provider and would prefer that we not use your data, please contact us at any time at mina709093@gmail.com.
+> We will stop using it immediately upon request, remove it from future releases, and cooperate fully with any further steps you may need.
+> We apologize for any inconvenience this may have caused.
+
+### 어떤 데이터를 어디서 가져오는지
+
+| 데이터 | 가져온 곳 | 조건 | 들어 있는 파일 |
+|---|---|---|---|
+| 판매 NPC, 드랍 몬스터, 확률, 위치 | [EG Link output: World of Warcraft: Forever](https://github.com/JIVESCORP/eg-link-output-wowf) — Data from [Efficient Games](https://efficient.games) | CC BY 4.0 | `ExternalData.lua` |
+| 한글 NPC·오브젝트 이름 | [QuestieDB](https://github.com/Questie/QuestieDB)의 Forever koKR 현지화 데이터, 그리고 설치된 갓존슨·KQuestGuide 애드온의 한글 NPC 이름 | GPLv3 (QuestieDB) | `ExternalData.lua` |
+| 사용자들이 확인한 획득처 | 사용자들이 게임 안에서 직접 기록해 보내 준 자료를 취합 | 보내 준 분들의 동의 | `CommunityData.lua` |
+| 퀘스트 보상의 한글 제목·NPC 위치 (실시간) | 설치된 KQuestGuide 애드온의 데이터(`KQG_DATA`)를 읽기만 함 | KQuestGuide 조건 (GPLv3) | `Core.lua` |
+| 길 안내 (선택) | 설치된 Shortest Path Forever 애드온의 공개 API를 읽기만 함 | 해당 애드온 조건 | `Popup.lua` |
+
+### 데이터를 어떻게 확인하는지
+
+- **실제로 확인한 정보만 넣습니다.** 다른 서버(클래식 등)의 자료나 추측은 넣지 않습니다.
+- 게임 안에서 상인 창을 열거나 몬스터를 루팅하면 실제 결과를 기록합니다. 파티원·길드원과 주고받을 수 있습니다.
+- **사용자 수집 자료는 취합 도구로 합친 뒤 검사합니다.** 기존 항목이 사라지지 않았는지, 좌표가 0~100 안인지, 파일이 정상적으로 읽히는지 확인한 다음에만 넣습니다.
+- 외부 데이터 파일(`ExternalData.lua`) 맨 위에 출처, 라이선스, 바꾼 내용, 만든 날짜가 적혀 있습니다.
+
+## 사용 방법
+
 마우스를 올린 제작 재료의 툴팁 맨 아래에 **가장 가까운** 획득처 하나씩을 표시합니다.
 판매 NPC 1명, 드랍 몬스터 1종입니다. 재료에 마우스를 올린 채 **F12**를 누르면 전체 목록 창이 열립니다.
 
