@@ -470,6 +470,9 @@ function RS.GetLines(itemID)
     local lines = {}
     local v, d = src.vendors[1], src.drops[1]
     if v then local c = RS.cfg.vendorColor; lines[#lines + 1] = { formatEntry(v), c[1], c[2], c[3] } end
+    -- 판매 NPC가 있으면 상점 구매가 (VendorPrice.lua)
+    local priceText = v and RS.VendorPriceLine and RS.VendorPriceLine(itemID)
+    if priceText then local c = RS.cfg.priceColor; lines[#lines + 1] = { priceText, c[1], c[2], c[3] } end
     if d then local c = RS.cfg.dropColor; lines[#lines + 1] = { formatEntry(d), c[1], c[2], c[3] } end
     local total = #src.vendors + #src.drops + #src.etc
     -- 획득처가 있으면 항상 안내 (단축키를 끈 경우 제외). 단축키는 사용자가 바꾼 키를 그대로 보여 줌

@@ -26,6 +26,7 @@
 | 길 안내 (선택) | 설치된 Shortest Path Forever 애드온의 공개 API를 읽기만 함 | 해당 애드온 조건 | `Popup.lua` |
 | 월드맵 장소 검색의 지명·좌표 (한글·영문) | 게임 클라이언트 자체 테이블(WorldMapOverlay, AreaTable, UiMap, UiMapXMapArt, UiMapAssignment, WMOAreaTable)과 지형·건물 배치 파일(ADT, WMO), [wago.tools](https://wago.tools)에서 받은 빌드 1.60.1.70888. 좌표는 지역 지도에서 그 지명의 탐험 영역 중심, 없으면 그 지명 땅이나 건물의 가운데 | 지명과 지도 자료의 권리는 Blizzard Entertainment | `MapSearchData.lua` |
 | 월드맵 이동·확대 (선택) | 설치된 OpenMap 애드온의 공개 API(`OpenMapAPI`)를 읽기만 함 | 해당 애드온 조건 (MIT) | `MapSearch.lua` |
+| 상점 구매가 (기본 가격) | 게임 클라이언트 자체 테이블 ItemSparse(BuyPrice, VendorStackCount), [wago.tools](https://wago.tools)에서 받은 빌드 1.60.1.70888. 상인 창을 열면 실제 가격으로 바꿔 씀 | 아이템 자료의 권리는 Blizzard Entertainment | `PriceData.lua` |
 
 ### 데이터를 어떻게 확인하는지
 
