@@ -2,6 +2,9 @@
 if not SangsuPack or not SangsuPack.RegisterChangelog then return end
 
 SangsuPack:RegisterChangelog("ReagentSource", {
+  { ver = "1.10.1",
+    "11월 24일 취합 데이터 반영: 판매처 420→522, 드랍 356→439, NPC 이름 478→554, 오브젝트 이름 5→6, 퀘스트 이름 104→125",
+  },
   { ver = "1.10.0",
     "재료 툴팁의 판매 NPC 줄 아래에 상점 구매가가 붉은색으로 나옵니다. 거래소 가격과 비교해 더 싼 쪽에서 사세요.",
     "여러 개를 한 번에 파는 재료는 개당 값과 묶음 값을 함께 보여 줍니다.",
