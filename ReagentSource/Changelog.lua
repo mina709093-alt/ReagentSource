@@ -2,6 +2,9 @@
 if not SangsuPack or not SangsuPack.RegisterChangelog then return end
 
 SangsuPack:RegisterChangelog("ReagentSource", {
+  { ver = "1.10.2",
+    "11월 25일 취합 데이터 반영: 판매처 522→595, 드랍 439→513, NPC 이름 554→632, 퀘스트 이름 125→142, 적대 NPC 8→9",
+  },
   { ver = "1.10.1",
     "11월 24일 취합 데이터 반영: 판매처 420→522, 드랍 356→439, NPC 이름 478→554, 오브젝트 이름 5→6, 퀘스트 이름 104→125",
   },
