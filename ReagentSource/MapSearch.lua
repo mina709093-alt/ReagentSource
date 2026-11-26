@@ -7,6 +7,7 @@
 --   · 장소는 월드맵만 다룹니다. 미니맵, 지도 웨이포인트(C_Map.SetUserWaypoint), 길 안내는 건드리지 않습니다.
 --   · (1.11.0) NPC 이름·부제로도 찾습니다(NpcSearchData.lua + 실제로 본 위치). NPC를 고르면 지도 이동에 더해
 --     획득처 창과 같은 길 안내(RS.Navigate: SPF 경로 또는 지도 핀)를 시작합니다.
+--   · (1.12.0) 던전·공격대·전장 입구도 찾습니다(DungeonEntranceData.lua). 고르면 NPC처럼 입구까지 길 안내합니다.
 --   · 전투 중에는 지도를 바꾸지 않고, 전투가 끝나면 이동합니다(월드맵 오염 방지).
 local _, ns = ...
 local RS = ns.RS
@@ -47,7 +48,7 @@ end
 
 ---------------------------------------------------------------------------
 -- 검색 목록 (처음 검색할 때 한 번 만듭니다)
---   { kind = "continent" | "zone" | "place", ko, en, map, x, y(0~1), zoneKo/zoneEn, contKo/contEn, kKo, kEn }
+--   { kind = "continent" | "zone" | "place" | "npc" | "dungeon", ko, en, map, x, y(0~1), zoneKo/zoneEn, contKo/contEn, kKo, kEn }
 ---------------------------------------------------------------------------
 local index
 local aliasKeys   -- [정리한 별칭] = 정리한 대상 이름
@@ -74,14 +75,43 @@ local function buildIndex()
         end
         index[#index + 1] = e
     end
+    -- 던전 입구 (1.12.0): 같은 지도에 같은 이름의 지명이 있으면 입구 결과만 남깁니다(겹침 방지).
+    local dungeonAt = {}
+    for _, r in ipairs(ns.DungeonEntranceData or {}) do
+        for i = 6, #r, 3 do dungeonAt[r[i] .. "|" .. tostring(r[2])] = true end
+    end
     for _, p in ipairs(D.places) do
         local zone = D.maps[p[3]]
         -- 지역 지도와 이름이 같은 지명(지역 자체)은 지역 결과와 겹치므로 뺍니다.
-        if zone and p[1] ~= zone[1] then
+        if zone and p[1] ~= zone[1] and not dungeonAt[p[3] .. "|" .. p[1]] then
             local e = { kind = "place", ko = p[1], en = p[2], map = p[3], x = p[4] / 100, y = p[5] / 100,
                 zoneKo = zone[1], zoneEn = zone[2] }
             e.contKo, e.contEn = contNames(zone[4])
             index[#index + 1] = e
+        end
+    end
+    for _, r in ipairs(ns.DungeonEntranceData or {}) do
+        -- { 지역 번호, 한글 이름, 영어 이름, 종류, 진영, 지도, x, y, ... }
+        local perMap = {}
+        for i = 6, #r, 3 do perMap[r[i]] = (perMap[r[i]] or 0) + 1 end
+        local nth = {}
+        for i = 6, #r, 3 do
+            local map = r[i]
+            local zone = D.maps[map]
+            if zone and r[2] then
+                local ko, en = r[2], r[3]
+                -- 한 지도에 입구가 여럿이면 "(입구 2)"처럼 번호를 붙입니다.
+                if perMap[map] > 1 then
+                    nth[map] = (nth[map] or 0) + 1
+                    ko = ko .. " (입구 " .. nth[map] .. ")"
+                    en = en .. " (Entrance " .. nth[map] .. ")"
+                end
+                local e = { kind = "dungeon", id = r[1], ko = ko, en = en, dkind = r[4],
+                    fac = (r[5] ~= "" and r[5]) or nil, map = map, x = r[i + 1] / 100, y = r[i + 2] / 100,
+                    zoneKo = zone[1], zoneEn = zone[2] }
+                e.contKo, e.contEn = contNames(zone[4])
+                index[#index + 1] = e
+            end
         end
     end
     -- NPC (1.11.0): QuestieDB 자료 + 취합 자료(CommunityData.npcSpots) + 내 기록(ReagentSourceDB.npcSpots)
@@ -140,7 +170,7 @@ local function buildIndex()
     return index
 end
 
-local KIND_ORDER = { continent = 0, zone = 1, place = 2, npc = 3 }
+local KIND_ORDER = { continent = 0, zone = 1, place = 2, dungeon = 2, npc = 3 }
 
 -- 한 이름(정리한 글자)과 검색어의 점수: 0 정확, 1 앞부분 일치, 2 중간 일치, nil 안 맞음
 local function scoreKey(key, q)
@@ -185,6 +215,14 @@ local function search(text)
     return found, #found
 end
 
+-- 진영 표시: 내 진영이면 흐리게, 다른 진영이면 붉게. 진영이 없으면 nil
+local function factionTag(fac)
+    if fac ~= "A" and fac ~= "H" then return nil end
+    local my = RS.PlayerFaction and RS.PlayerFaction()
+    local mineFac = (fac == "A" and my == "Alliance") or (fac == "H" and my == "Horde")
+    return (mineFac and MUTED or "|cffff6060") .. (fac == "A" and " (얼라이언스)" or " (호드)") .. "|r"
+end
+
 -- 결과 한 줄 글: "장소명 | 소속 지역 | 대륙"
 local function rowText(r)
     local e, ko = r.e, isKorean()
@@ -195,15 +233,19 @@ local function rowText(r)
         return format("|cffffffff%s|r%s  %s| 대륙|r", name, extra, MUTED)
     elseif e.kind == "zone" then
         return format("|cffffffff%s|r%s  %s| %s|r  %s(지역)|r", name, extra, MUTED, ko and e.contKo or e.contEn, ACCENT)
+    elseif e.kind == "dungeon" then
+        -- "[던전 입구] 이름 | 지역 | 대륙 (공격대)(호드)"
+        local DK = { d = "던전 입구", r = "공격대 입구", b = "전장 입구", t = "교통" }
+        local tags = ""
+        local fac = factionTag(e.fac)
+        if fac then tags = tags .. fac end
+        return format("|cffffd100[%s]|r |cffffffff%s|r%s  %s| %s | %s|r%s", DK[e.dkind] or DK.d, name, extra, MUTED,
+            ko and e.zoneKo or e.zoneEn, ko and e.contKo or e.contEn, tags)
     elseif e.kind == "npc" then
         -- "[NPC] 이름 <부제> | 지역 | 대륙 (희귀)(얼라이언스)(확인됨)"
         local tags = ""
         if e.rank == 2 or e.rank == 4 then tags = tags .. " |cffc0c0ff(희귀)|r" end
-        local my = RS.PlayerFaction and RS.PlayerFaction()
-        if e.fac == "A" or e.fac == "H" then
-            local mineFac = (e.fac == "A" and my == "Alliance") or (e.fac == "H" and my == "Horde")
-            tags = tags .. (mineFac and MUTED or "|cffff6060") .. (e.fac == "A" and " (얼라이언스)" or " (호드)") .. "|r"
-        end
+        tags = tags .. (factionTag(e.fac) or "")
         if e.seen then tags = tags .. ACCENT .. " (확인됨)|r" end
         local sub = e.sub and (MUTED .. " <" .. e.sub .. ">|r") or ""
         return format("|cffffd100[NPC]|r |cffffffff%s|r%s%s  %s| %s | %s|r%s", name, sub, extra, MUTED,
@@ -277,7 +319,7 @@ local function go(e)
         local ok, moved = pcall(function()
             local l, t, r, b = mapRect(api, e.map)
             if not l then return false end
-            if e.kind == "place" or e.kind == "npc" then
+            if e.kind == "place" or e.kind == "npc" or e.kind == "dungeon" then
                 local u, v = api.WorldFromMap(e.map, e.x, e.y)
                 if not u then return false end
                 api.ShowWorld(u, v, 1 / ((r - l) * ZOOM_PLACE))
@@ -297,7 +339,7 @@ local function go(e)
         RS.Print("이 지도를 열 수 없습니다: " .. (isKorean() and e.ko or e.en))
         return false
     end
-    if e.kind == "place" or e.kind == "npc" then
+    if e.kind == "place" or e.kind == "npc" or e.kind == "dungeon" then
         target = { map = e.map, x = e.x, y = e.y, name = e.ko, nameEn = e.en }
         showMarker()
         -- 지도가 바뀐 다음 화면 크기가 잡힌 뒤에 확대합니다.
@@ -460,14 +502,15 @@ local function choose(i)
         edit:ClearFocus()
     end
     go(r.e)
-    -- NPC는 지도 이동과 함께 길 안내(획득처 창과 같은 방식: SPF가 있으면 경로, 없으면 지도 핀)
-    if r.e.kind == "npc" and RS.Navigate then
-        local e = r.e
+    -- NPC·던전 입구는 지도 이동과 함께 길 안내(획득처 창과 같은 방식: SPF가 있으면 경로, 없으면 지도 핀)
+    local e = r.e
+    if (e.kind == "npc" or e.kind == "dungeon") and RS.Navigate then
+        local isNpc = e.kind == "npc"
         local nav = { uiMap = e.map, x = floor(e.x * 1000 + 0.5) / 10, y = floor(e.y * 1000 + 0.5) / 10,
-            name = isKorean() and e.ko or e.en, zone = isKorean() and e.zoneKo or e.zoneEn, npc = e.id,
-            label = "NPC 찾기" }
-        local ok, err = pcall(RS.Navigate, nav, nil, true)
-        if not ok then RS.Print("|cffff4444NPC 길 안내 오류:|r " .. tostring(err)) end
+            name = isKorean() and e.ko or e.en, zone = isKorean() and e.zoneKo or e.zoneEn, npc = isNpc and e.id or nil,
+            label = isNpc and "NPC 찾기" or "던전 입구" }
+        local ok, err = pcall(RS.Navigate, nav, nil, isNpc)
+        if not ok then RS.Print("|cffff4444길 안내 오류:|r " .. tostring(err)) end
     end
 end
 
@@ -611,7 +654,7 @@ local function createBox(wm)
 
     hint = edit:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     hint:SetPoint("LEFT", 3, 0)
-    hint:SetText("장소·NPC 검색 (예: 모건의 망루, 들창코)")
+    hint:SetText("장소·NPC·던전 검색 (예: 들창코, 죽음의 폐광)")
 
     clearBtn = CreateFrame("Button", nil, box)
     clearBtn:SetSize(20, BOX_H - 4)

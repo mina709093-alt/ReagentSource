@@ -217,7 +217,7 @@ local function handle(msg)
     elseif cmd == "출처" or cmd == "credits" then
         RS.Print("판매/드랍 기본 자료: Data from Efficient Games (https://efficient.games), licensed under CC BY 4.0.")
         RS.Print("원본: github.com/JIVESCORP/eg-link-output-wowf (빌드 병합·좌표 요약·필터링하여 변환)")
-        RS.Print("한글 NPC 이름, 월드맵 NPC 검색의 NPC 위치: QuestieDB (github.com/Questie/QuestieDB) Forever 자료, GPLv3.")
+        RS.Print("한글 NPC 이름, 월드맵 NPC 검색의 NPC 위치, 던전 입구 위치: QuestieDB (github.com/Questie/QuestieDB) Forever 자료, GPLv3.")
     elseif cmd == "디버그" or cmd == "debug" then
         RS.debug = not RS.debug
         RS.Print("디버그 알림: " .. (RS.debug and "켜짐" or "꺼짐"))

@@ -2,6 +2,10 @@
 if not SangsuPack or not SangsuPack.RegisterChangelog then return end
 
 SangsuPack:RegisterChangelog("ReagentSource", {
+  { ver = "1.12.0",
+    "월드맵 검색창에서 던전·공격대·전장 입구도 찾습니다(예: 죽음의 폐광, 화산 심장부, 알터랙 계곡). 결과를 누르면 지도가 입구로 가고 길 안내가 시작됩니다.",
+    "입구가 여러 곳인 던전은 입구마다 결과가 나오고, 진영마다 입구가 다른 전장은 진영을 함께 표시합니다(다른 진영은 붉은색).",
+  },
   { ver = "1.11.0",
     "월드맵 검색창에서 NPC도 찾습니다. NPC 이름이나 부제(예: 그리핀 조련사)를 입력하고 결과를 누르면 지도가 그 위치로 가고 길 안내가 시작됩니다.",
     "NPC 위치는 QuestieDB 자료(약 9,000명)를 씁니다. 자료에 없는 NPC를 가까이서 보거나, 대화한 NPC의 위치가 자료와 다르면 실제 위치를 기록합니다.",
