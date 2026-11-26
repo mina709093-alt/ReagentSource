@@ -101,7 +101,7 @@ local function submitRoute(e, itemName, isVendor)
     local api = spfApi()
     if api and api.NavigateRoute and RS.cfg.useSPF ~= false then
         local stop = { map = e.uiMap, x = e.x / 100, y = e.y / 100,
-            title = (itemName and (itemName .. " · ") or "") .. e.name, radius = ARRIVE_YARDS }
+            title = (itemName and (itemName .. " · ") or (e.label and (e.label .. " · ")) or "") .. e.name, radius = ARRIVE_YARDS }
         if isVendor and e.npc then stop.npc = e.npc end -- 도착하면 상인 이름표 강조
         -- 다른 애드온의 길찾기가 진행 중이면 다시 걸 때는 덮어쓰지 않는다
         local ok, res = pcall(api.NavigateRoute, SPF_OWNER, { stop })
@@ -215,11 +215,15 @@ local function startGuide(e, itemName, mode, isVendor)
     local inst, wx, wy = worldOf(e.uiMap, e.x / 100, e.y / 100)
     guide = { e = e, itemName = itemName, mode = mode, isVendor = isVendor, inst = inst, wx = wx, wy = wy, started = GetTime() }
     if RS.db then -- /reload·재접속 뒤 이어서 안내하기 위해 저장
-        RS.db.activeGuide = { e = { zone = e.zone, name = e.name, x = e.x, y = e.y, uiMap = e.uiMap, npc = e.npc, method = e.method },
-            itemName = itemName, isVendor = isVendor }
+        RS.db.activeGuide = { e = { zone = e.zone, name = e.name, x = e.x, y = e.y, uiMap = e.uiMap, npc = e.npc, method = e.method,
+            label = e.label }, itemName = itemName, isVendor = isVendor }
     end
     local who = e.method and ("[" .. e.method .. "] " .. e.name) or e.name
-    guideBar.text:SetText(format("|cff66ccff%s|r - %s - 획득처로 안내 중", who, itemName or "아이템"))
+    if e.label then -- 장소·NPC 검색에서 시작한 안내 (1.11.0)
+        guideBar.text:SetText(format("|cff66ccff%s|r - %s 안내 중", who, e.label))
+    else
+        guideBar.text:SetText(format("|cff66ccff%s|r - %s - 획득처로 안내 중", who, itemName or "아이템"))
+    end
     guideBar.dist:SetText("")
     guideBar:Show()
     if frame then frame:Hide() end -- 획득처 창 닫기

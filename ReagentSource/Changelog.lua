@@ -2,6 +2,11 @@
 if not SangsuPack or not SangsuPack.RegisterChangelog then return end
 
 SangsuPack:RegisterChangelog("ReagentSource", {
+  { ver = "1.11.0",
+    "월드맵 검색창에서 NPC도 찾습니다. NPC 이름이나 부제(예: 그리핀 조련사)를 입력하고 결과를 누르면 지도가 그 위치로 가고 길 안내가 시작됩니다.",
+    "NPC 위치는 QuestieDB 자료(약 9,000명)를 씁니다. 자료에 없는 NPC를 가까이서 보거나, 대화한 NPC의 위치가 자료와 다르면 실제 위치를 기록합니다.",
+    "기록한 NPC 위치도 다른 획득처 데이터처럼 파티·길드원과 자동으로 주고받고, 보내 주신 파일로 취합됩니다. 확인된 위치는 검색 결과에 (확인됨)으로 표시됩니다.",
+  },
   { ver = "1.10.2",
     "11월 25일 취합 데이터 반영: 판매처 522→595, 드랍 439→513, NPC 이름 554→632, 퀘스트 이름 125→142, 적대 NPC 8→9",
   },

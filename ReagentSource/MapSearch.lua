@@ -4,7 +4,9 @@
 --     OpenMap(이어 붙인 세계 지도)이 켜져 있으면 OpenMap 공개 API(OpenMapAPI)로 그 지점까지 이동·확대합니다.
 --     기본 월드맵이면 SetMapID로 지도를 바꾸고, 확대 기능이 있으면 그 지점으로 확대합니다.
 --   · 지명 자료는 MapSearchData.lua(게임 테이블에서 자동 생성)를 씁니다.
---   · 월드맵만 다룹니다. 미니맵, 지도 웨이포인트(C_Map.SetUserWaypoint), 길 안내는 건드리지 않습니다.
+--   · 장소는 월드맵만 다룹니다. 미니맵, 지도 웨이포인트(C_Map.SetUserWaypoint), 길 안내는 건드리지 않습니다.
+--   · (1.11.0) NPC 이름·부제로도 찾습니다(NpcSearchData.lua + 실제로 본 위치). NPC를 고르면 지도 이동에 더해
+--     획득처 창과 같은 길 안내(RS.Navigate: SPF 경로 또는 지도 핀)를 시작합니다.
 --   · 전투 중에는 지도를 바꾸지 않고, 전투가 끝나면 이동합니다(월드맵 오염 방지).
 local _, ns = ...
 local RS = ns.RS
@@ -82,13 +84,63 @@ local function buildIndex()
             index[#index + 1] = e
         end
     end
+    -- NPC (1.11.0): QuestieDB 자료 + 취합 자료(CommunityData.npcSpots) + 내 기록(ReagentSourceDB.npcSpots)
+    --   같은 NPC·같은 지도면 내 기록 → 취합 자료 → QuestieDB 순으로 위치를 고릅니다. 앞의 둘은 "확인됨"
+    local function addNpc(id, ko, en, sub, fac, rank, map, x, y, seen)
+        local zone = D.maps[map]
+        if not zone or not x or not y then return end
+        local e = { kind = "npc", id = id, ko = ko or en, en = en or ko, sub = sub, fac = fac, rank = rank,
+            map = map, x = x / 100, y = y / 100, zoneKo = zone[1], zoneEn = zone[2], seen = seen }
+        e.contKo, e.contEn = contNames(zone[4])
+        index[#index + 1] = e
+    end
+    local mine = RS.db and type(RS.db.npcSpots) == "table" and RS.db.npcSpots or {}
+    local cm = ns.CommunityData and type(ns.CommunityData.npcSpots) == "table" and ns.CommunityData.npcSpots or {}
+    local function seenSpot(id, map)
+        local m = mine[id] and type(mine[id].m) == "table" and mine[id].m[map]
+        if m and m.x and m.y then return m.x, m.y end
+        local c = cm[id] and type(cm[id].m) == "table" and cm[id].m[map]
+        if c then return c[1], c[2] end
+    end
+    local known = {}
+    for _, r in ipairs(ns.NpcSearchData or {}) do
+        local id = r[1]
+        local done = {}
+        known[id] = { ko = r[2] or nil, en = r[3], done = done }
+        for i = 7, #r, 3 do
+            local map = r[i]
+            local sx, sy = seenSpot(id, map)
+            addNpc(id, r[2] or nil, r[3], r[4] or nil, r[5], r[6], map, sx or r[i + 1], sy or r[i + 2], sx ~= nil)
+            done[map] = true
+        end
+    end
+    -- 자료에 없는 NPC나 자료에 없는 지도의 위치
+    local function addSeen(src, isMine)
+        for id, e in pairs(src) do
+            local k = known[id]
+            if not k then k = { done = {} }; known[id] = k end
+            for map, s in pairs(type(e.m) == "table" and e.m or {}) do
+                local x, y
+                if isMine then x, y = s.x, s.y else x, y = s[1], s[2] end
+                if not k.done[map] and x and y then
+                    local name = k.ko or e.name or k.en
+                    addNpc(id, name, k.en or name, nil, nil, nil, map, x, y, true)
+                    k.done[map] = true
+                end
+            end
+        end
+    end
+    addSeen(mine, true)
+    addSeen(cm, false)
+
     for _, e in ipairs(index) do
         e.kKo, e.kEn = normalize(e.ko), normalize(e.en)
+        if e.sub then e.kSub = normalize(e.sub) end
     end
     return index
 end
 
-local KIND_ORDER = { continent = 0, zone = 1, place = 2 }
+local KIND_ORDER = { continent = 0, zone = 1, place = 2, npc = 3 }
 
 -- 한 이름(정리한 글자)과 검색어의 점수: 0 정확, 1 앞부분 일치, 2 중간 일치, nil 안 맞음
 local function scoreKey(key, q)
@@ -111,6 +163,11 @@ local function search(text)
         local s = sk
         if se and (not s or se < s) then s = se end
         if alias and (e.kKo == alias or e.kEn == alias) then s = 0 end
+        -- NPC 부제(예: 그리핀 조련사)로도 찾습니다. 이름보다 한 단계 뒤
+        if e.kSub and not s then
+            local ss = scoreKey(e.kSub, q)
+            if ss then s = (ss == 0) and 1 or 2 end
+        end
         if s then
             found[#found + 1] = { e = e, s = s, byEn = (se ~= nil and (sk == nil or se < sk)) }
         end
@@ -138,6 +195,19 @@ local function rowText(r)
         return format("|cffffffff%s|r%s  %s| 대륙|r", name, extra, MUTED)
     elseif e.kind == "zone" then
         return format("|cffffffff%s|r%s  %s| %s|r  %s(지역)|r", name, extra, MUTED, ko and e.contKo or e.contEn, ACCENT)
+    elseif e.kind == "npc" then
+        -- "[NPC] 이름 <부제> | 지역 | 대륙 (희귀)(얼라이언스)(확인됨)"
+        local tags = ""
+        if e.rank == 2 or e.rank == 4 then tags = tags .. " |cffc0c0ff(희귀)|r" end
+        local my = RS.PlayerFaction and RS.PlayerFaction()
+        if e.fac == "A" or e.fac == "H" then
+            local mineFac = (e.fac == "A" and my == "Alliance") or (e.fac == "H" and my == "Horde")
+            tags = tags .. (mineFac and MUTED or "|cffff6060") .. (e.fac == "A" and " (얼라이언스)" or " (호드)") .. "|r"
+        end
+        if e.seen then tags = tags .. ACCENT .. " (확인됨)|r" end
+        local sub = e.sub and (MUTED .. " <" .. e.sub .. ">|r") or ""
+        return format("|cffffd100[NPC]|r |cffffffff%s|r%s%s  %s| %s | %s|r%s", name, sub, extra, MUTED,
+            ko and e.zoneKo or e.zoneEn, ko and e.contKo or e.contEn, tags)
     end
     return format("|cffffffff%s|r%s  %s| %s | %s|r", name, extra, MUTED,
         ko and e.zoneKo or e.zoneEn, ko and e.contKo or e.contEn)
@@ -207,7 +277,7 @@ local function go(e)
         local ok, moved = pcall(function()
             local l, t, r, b = mapRect(api, e.map)
             if not l then return false end
-            if e.kind == "place" then
+            if e.kind == "place" or e.kind == "npc" then
                 local u, v = api.WorldFromMap(e.map, e.x, e.y)
                 if not u then return false end
                 api.ShowWorld(u, v, 1 / ((r - l) * ZOOM_PLACE))
@@ -227,7 +297,7 @@ local function go(e)
         RS.Print("이 지도를 열 수 없습니다: " .. (isKorean() and e.ko or e.en))
         return false
     end
-    if e.kind == "place" then
+    if e.kind == "place" or e.kind == "npc" then
         target = { map = e.map, x = e.x, y = e.y, name = e.ko, nameEn = e.en }
         showMarker()
         -- 지도가 바뀐 다음 화면 크기가 잡힌 뒤에 확대합니다.
@@ -390,6 +460,15 @@ local function choose(i)
         edit:ClearFocus()
     end
     go(r.e)
+    -- NPC는 지도 이동과 함께 길 안내(획득처 창과 같은 방식: SPF가 있으면 경로, 없으면 지도 핀)
+    if r.e.kind == "npc" and RS.Navigate then
+        local e = r.e
+        local nav = { uiMap = e.map, x = floor(e.x * 1000 + 0.5) / 10, y = floor(e.y * 1000 + 0.5) / 10,
+            name = isKorean() and e.ko or e.en, zone = isKorean() and e.zoneKo or e.zoneEn, npc = e.id,
+            label = "NPC 찾기" }
+        local ok, err = pcall(RS.Navigate, nav, nil, true)
+        if not ok then RS.Print("|cffff4444NPC 길 안내 오류:|r " .. tostring(err)) end
+    end
 end
 
 local function makeRow(i)
@@ -532,7 +611,7 @@ local function createBox(wm)
 
     hint = edit:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     hint:SetPoint("LEFT", 3, 0)
-    hint:SetText("장소 검색 (예: 모건의 망루)")
+    hint:SetText("장소·NPC 검색 (예: 모건의 망루, 들창코)")
 
     clearBtn = CreateFrame("Button", nil, box)
     clearBtn:SetSize(20, BOX_H - 4)
@@ -622,4 +701,6 @@ ev:SetScript("OnEvent", function(self, event, arg1)
     end
 end)
 
-RS.MapSearch = { Search = search, Go = go, Normalize = normalize }
+-- Reset: NPC 위치 기록이 바뀌면 다음 검색 때 목록을 다시 만듭니다(NpcSpots.lua에서 부름)
+RS.MapSearch = { Search = search, Go = go, Normalize = normalize, Choose = choose,
+    Reset = function() index = nil end, Results = function() return results end }

@@ -27,6 +27,7 @@
 | 월드맵 장소 검색의 지명·좌표 (한글·영문) | 게임 클라이언트 자체 테이블(WorldMapOverlay, AreaTable, UiMap, UiMapXMapArt, UiMapAssignment, WMOAreaTable)과 지형·건물 배치 파일(ADT, WMO), [wago.tools](https://wago.tools)에서 받은 빌드 1.60.1.70888. 좌표는 지역 지도에서 그 지명의 탐험 영역 중심, 없으면 그 지명 땅이나 건물의 가운데 | 지명과 지도 자료의 권리는 Blizzard Entertainment | `MapSearchData.lua` |
 | 월드맵 이동·확대 (선택) | 설치된 OpenMap 애드온의 공개 API(`OpenMapAPI`)를 읽기만 함 | 해당 애드온 조건 (MIT) | `MapSearch.lua` |
 | 상점 구매가 (기본 가격) | 게임 클라이언트 자체 테이블 ItemSparse(BuyPrice, VendorStackCount), [wago.tools](https://wago.tools)에서 받은 빌드 1.60.1.70888. 상인 창을 열면 실제 가격으로 바꿔 씀 | 아이템 자료의 권리는 Blizzard Entertainment | `PriceData.lua` |
+| 월드맵 NPC 검색의 NPC 이름·부제·위치 | [QuestieDB](https://github.com/Questie/QuestieDB)의 Forever 자료(1.1.6): NPC 한글 이름·부제(koKR)와 스폰 좌표. 지도마다 스폰들의 가운데에 가장 가까운 한 곳. 사용자들이 게임 안에서 본 실제 위치(취합)가 있으면 그것을 먼저 씀 | GPLv3 (QuestieDB) | `NpcSearchData.lua`, `CommunityData.lua` |
 
 ### 데이터를 어떻게 확인하는지
 
@@ -35,6 +36,7 @@
 - **사용자 수집 자료는 취합 도구로 합친 뒤 검사합니다.** 기존 항목이 사라지지 않았는지, 좌표가 0~100 안인지, 파일이 정상적으로 읽히는지 확인한 다음에만 넣습니다.
 - 외부 데이터 파일(`ExternalData.lua`) 맨 위에 출처, 라이선스, 바꾼 내용, 만든 날짜가 적혀 있습니다.
 - 장소 검색 자료(`MapSearchData.lua`)는 게임 테이블과 지형·건물 배치 파일에서 자동으로 만듭니다. 어디에서도 위치를 알 수 없는 지명은 넣지 않습니다(지역 중앙으로 대신하지 않음).
+- NPC 검색 자료(`NpcSearchData.lua`)는 QuestieDB Forever 자료에서 자동으로 만듭니다. 게임 안에서 사용자들이 직접 본 NPC 위치(자료에 없는 NPC, 자료와 다른 위치)는 따로 기록해 취합하고, 그 위치를 먼저 씁니다.
 
 ## 사용 방법
 
@@ -151,7 +153,7 @@ Data from [Efficient Games](https://efficient.games), licensed under [CC BY 4.0]
 퀘스트 전용 드랍, 무두질, 소매치기, 채집물, 낚시는 빼고 Lua 표로 변환했습니다.
 게임 내 이름 등 게임 콘텐츠의 권리는 Blizzard Entertainment에 있습니다.
 
-한글 NPC·오브젝트 이름: [QuestieDB](https://github.com/Questie/QuestieDB) `l10n/Forever` koKR. QuestieDB 팀이 허용한 GPLv3 조건으로 사용했습니다.
+한글 NPC·오브젝트 이름: [QuestieDB](https://github.com/Questie/QuestieDB) `l10n/Forever` koKR. 월드맵 NPC 검색 자료(`NpcSearchData.lua`)의 NPC 이름·부제·스폰 좌표도 QuestieDB Forever 자료입니다. QuestieDB 팀이 허용한 GPLv3 조건으로 사용했습니다.
 이 데이터가 들어 있으므로 ReagentSource를 다른 사람에게 배포할 때는 GPLv3 조건(소스 공개, 같은 라이선스)을 따라야 합니다.
 
 ## 호환성 메모 (12.x 엔진 기반 포에버 클라이언트)

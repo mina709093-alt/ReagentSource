@@ -75,6 +75,8 @@ function RS.HasKey(key)
     elseif kind == "h" then
         local n = E.npc and E.npc[a]
         return db.hostileNPC[a] ~= nil or (cm.hostile and cm.hostile[a]) ~= nil or (n and n[3]) ~= nil
+    elseif kind == "p" then
+        return not (RS.NpcSpots and b) or RS.NpcSpots.HasKey(a, b)
     end
     return false
 end
@@ -90,7 +92,7 @@ function RS.CountContributions(includeReceived)
     if not shippedV then buildIndex() end
     local E, cm = ns.ExternalData or {}, ns.CommunityData or {}
     local keys = {}
-    local c = { vendor = 0, drop = 0, name = 0, hostile = 0 }
+    local c = { vendor = 0, drop = 0, name = 0, hostile = 0, npc = 0 }
 
     for item, list in pairs(RS.db.vendors) do
         for _, e in pairs(list) do
@@ -129,7 +131,9 @@ function RS.CountContributions(includeReceived)
             keys["h:" .. id] = true; c.hostile = c.hostile + 1
         end
     end
-    local total = c.vendor + c.drop + c.name + c.hostile
+    -- NPC 위치 (1.11.0, NpcSpots.lua)
+    if RS.NpcSpots then c.npc = RS.NpcSpots.Contributions(keys, includeReceived) end
+    local total = c.vendor + c.drop + c.name + c.hostile + c.npc
     return total, c, keys
 end
 
@@ -320,8 +324,8 @@ end
 
 local function refreshWindow()
     local n, c = unsentCount()
-    alertFrame.summary:SetText(format("새로 수집한 데이터가 |cffffd100%d건|r 있습니다.  (판매 %d · 드랍 %d · 이름 %d · 적대 상인 %d)",
-        n, c.vendor, c.drop, c.name, c.hostile))
+    alertFrame.summary:SetText(format("새로 수집한 데이터가 |cffffd100%d건|r 있습니다.  (판매 %d · 드랍 %d · 이름 %d · 적대 상인 %d · NPC 위치 %d)",
+        n, c.vendor, c.drop, c.name, c.hostile, c.npc or 0))
     local saved = RS.db.shareSavedAt and (time() - RS.db.shareSavedAt) < 6 * 3600
     alertFrame.step1:SetText("|cffffd1001.|r 아래 |cffffd100[저장]|r 버튼을 누르세요. (화면이 잠깐 다시 불러와지면서 파일에 저장됩니다)"
         .. (saved and "  |cff66ff66(저장 완료)|r" or ""))

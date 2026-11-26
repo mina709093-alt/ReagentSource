@@ -181,6 +181,9 @@ local function dataMessage(key)
         return format("N|%s|q|%d|%s", token, a, clean(db.questNames[a]))
     elseif kind == "h" and db.hostileNPC[a] then
         return format("X|%s|%d|%s", token, a, clean(db.hostileNPC[a]))
+    elseif kind == "p" and b and RS.NpcSpots then
+        local x, y, name = RS.NpcSpots.Get(a, b)
+        if x then return format("P|%s|%d|%d|%s|%s|%s", token, a, b, num(x), num(y), clean(name)) end
     end
 end
 
@@ -237,6 +240,11 @@ local function applyData(kind, who, f)
         db.hostileNPC[id] = fac
         db.rx.h[id] = who
         noteReceived(who)
+    elseif kind == "P" then
+        -- NPC 위치 (1.11.0): P|token|NPC번호|지도|x|y|이름
+        if RS.NpcSpots and RS.NpcSpots.Apply(tonumber(f[3]), tonumber(f[4]), tonumber(f[5]), tonumber(f[6]), f[7], who) then
+            noteReceived(who)
+        end
     end
 end
 
@@ -301,7 +309,7 @@ local function onMessage(prefix, msg, ch, sender)
             local m = dataMessage(k)
             if m then enqueue(m, ch, k) end
         end
-    elseif kind == "V" or kind == "D" or kind == "N" or kind == "X" then
+    elseif kind == "V" or kind == "D" or kind == "N" or kind == "X" or kind == "P" then
         applyData(kind, who, f) -- 누구에게 온 데이터든, 내가 모르는 것이면 합친다
     end
 end
