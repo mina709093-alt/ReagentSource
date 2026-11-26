@@ -4,8 +4,8 @@ local out, cdPath = arg[1], arg[2]
 local ns = {}
 assert(loadfile(cdPath, "t", setmetatable({}, { __index = _G })))(nil, ns)
 local C = ns.CommunityData
-for _, s in ipairs({ "vendors", "drops", "npcNames", "objNames", "questNames", "hostile" }) do C[s] = C[s] or {} end
-local added = { vendors = 0, drops = 0, npcNames = 0, objNames = 0, questNames = 0, hostile = 0 }
+for _, s in ipairs({ "vendors", "drops", "npcNames", "objNames", "questNames", "hostile", "npcSpots" }) do C[s] = C[s] or {} end
+local added = { vendors = 0, drops = 0, npcNames = 0, objNames = 0, questNames = 0, hostile = 0, npcSpots = 0 }
 local function r1(v) return v and math.floor(v * 10 + 0.5) / 10 end
 local function has(list, npc) for _, e in ipairs(list) do if e.npc == npc then return e end end end
 for i = 3, #arg do
@@ -35,6 +35,26 @@ for i = 3, #arg do
           added.drops = added.drops + 1
         elseif (old.n or 0) < n and x then
           old.x, old.y, old.n = x, y, n
+        end
+      end
+    end
+  end
+  -- NPC 위치 (ReagentSource 1.11.0, 월드맵 NPC 검색): db.npcSpots[NPC] = { name, m = { [지도] = { x, y, n } } }
+  --   같은 NPC·같은 지도는 관측 횟수(n)가 많은 쪽을 씁니다. 좌표는 0~100 안만.
+  for id, e in pairs(db.npcSpots or {}) do
+    if type(id) == "number" and type(e) == "table" and type(e.m) == "table" and e.name then
+      for map, s in pairs(e.m) do
+        local x, y, n = tonumber(s.x), tonumber(s.y), tonumber(s.n) or 1
+        if type(map) == "number" and x and y and x > 0 and x < 100 and y > 0 and y < 100 then
+          local c = C.npcSpots[id] or { name = e.name, m = {} }
+          C.npcSpots[id] = c
+          local old = c.m[map]
+          if not old then
+            c.m[map] = { r1(x), r1(y), n }
+            added.npcSpots = added.npcSpots + 1
+          elseif (old[3] or 1) < n then
+            c.m[map] = { r1(x), r1(y), n }
+          end
         end
       end
     end
@@ -74,6 +94,17 @@ for _, s in ipairs({ "npcNames", "objNames", "questNames", "hostile" }) do
   for _, k in ipairs(sortedKeys(C[s])) do L[#L + 1] = "        [" .. k .. "] = " .. q(C[s][k]) .. "," end
   L[#L + 1] = "    },"
 end
+L[#L + 1] = "    npcSpots = {"
+for _, id in ipairs(sortedKeys(C.npcSpots)) do
+  local c = C.npcSpots[id]
+  local parts = {}
+  for _, map in ipairs(sortedKeys(c.m)) do
+    local s = c.m[map]
+    parts[#parts + 1] = "[" .. map .. "] = { " .. s[1] .. ", " .. s[2] .. ", " .. (s[3] or 1) .. " }"
+  end
+  L[#L + 1] = "        [" .. id .. "] = { name = " .. q(c.name) .. ", m = { " .. table.concat(parts, ", ") .. " } },"
+end
+L[#L + 1] = "    },"
 L[#L + 1] = "}"
 local f = assert(io.open(out, "w")); f:write(table.concat(L, "\n") .. "\n"); f:close()
 for k, v in pairs(added) do print(k, "+" .. v) end
