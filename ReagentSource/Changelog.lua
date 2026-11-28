@@ -2,6 +2,9 @@
 if not SangsuPack or not SangsuPack.RegisterChangelog then return end
 
 SangsuPack:RegisterChangelog("ReagentSource", {
+  { ver = "1.12.1",
+    "11월 28일 취합 데이터 반영: 판매처 595→642, 드랍 513→596, NPC 이름 632→667, 퀘스트 이름 142→163, 적대 NPC 9→10, NPC 위치 0→9",
+  },
   { ver = "1.12.0",
     "월드맵 검색창에서 던전·공격대·전장 입구도 찾습니다(예: 죽음의 폐광, 화산 심장부, 알터랙 계곡). 결과를 누르면 지도가 입구로 가고 길 안내가 시작됩니다.",
     "입구가 여러 곳인 던전은 입구마다 결과가 나오고, 진영마다 입구가 다른 전장은 진영을 함께 표시합니다(다른 진영은 붉은색).",
